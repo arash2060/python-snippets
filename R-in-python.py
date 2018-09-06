@@ -1,10 +1,12 @@
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 import rpy2.robjects.packages as rpackages
-from rpy2.robjects.packages import importr
+from rpy2.robjects.packages import importr, data
 from rpy2.robjects import FloatVector
 from rpy2 import robjects
 import pandas as pd
+
+
 
 pandas2ri.activate()
 
@@ -30,11 +32,12 @@ utils = importr('utils', robject_translations = d)
 utils.chooseCRANmirror(ind=1) # select the first mirror in the list
 
 # R package names
-packnames = ('hexbin')
+packnames = ('rlang','ggplot2')
 
 # R vector of strings
 from rpy2.robjects.vectors import StrVector
 
+# Make a ggplot2
 # Selectively install what needs to be install.
 # We are fancy, just because we can.
 names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
@@ -42,7 +45,23 @@ if len(names_to_install) > 0:
     utils.install_packages(StrVector(names_to_install))
 
 print('hexbin is installed? ', rpackages.isinstalled('hexbin'))
-ggplot2 = importr('hexbin', robject_translations = d)
+print('ggplot2 is installed? ', rpackages.isinstalled('ggplot2'))
+
+ggplot2 = importr('ggplot2', robject_translations = d)
+
+import math, datetime
+import rpy2.robjects.lib.ggplot2 as ggplot2
+
+datasets = importr('datasets')
+
+mtcars = data(datasets).fetch('mtcars')['mtcars']
+
+pp = ggplot2.ggplot(mtcars) + \
+     ggplot2.aes_string(x='wt', y='mpg', col='factor(cyl)') + \
+     ggplot2.geom_point() + \
+     ggplot2.geom_smooth(ggplot2.aes_string(group = 'cyl'),
+                         method = 'lm')
+pp.plot()
 
 # Run a regresison
 stats = importr('stats')
@@ -80,4 +99,3 @@ print(type(rdf))
 # and turn back to pd
 df2 = pandas2ri.ri2py(rdf)
 print(type(df2))
-
